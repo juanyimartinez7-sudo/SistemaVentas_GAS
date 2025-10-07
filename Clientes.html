@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Gestión de Clientes</h1>
+        <button id="btnNuevoCliente" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Nuevo Cliente
+        </button>
+      </header>
+      
+      <!-- Buscador -->
+      <div class="mb-4">
+          <input type="text" id="buscadorClientes" placeholder="Buscar por nombre, código o documento..." class="form-input w-full md:w-1/2">
+      </div>
+
+      <!-- Tabla de Clientes -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="table-header">Código</th>
+                <th class="table-header">Nombre</th>
+                <th class="table-header">Documento</th>
+                <th class="table-header">Tipo NCF</th>
+                <th class="table-header">Teléfono</th>
+                <th class="table-header">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaClientes" class="bg-white divide-y divide-gray-200">
+              <!-- Las filas se insertarán dinámicamente con JavaScript -->
+              <tr><td colspan="6" class="text-center p-4">Cargando clientes...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  
+  <!-- Modal para Nuevo/Editar Cliente -->
+  <div id="modalCliente" class="modal-container hidden">
+      <div class="modal">
+          <div class="modal-header">
+              <h2 id="modalClienteTitle" class="text-xl font-bold">Nuevo Cliente</h2>
+              <button id="modalClienteClose" class="text-gray-500 hover:text-gray-800">&times;</button>
+          </div>
+          <div class="modal-body">
+              <form id="formCliente">
+                  <input type="hidden" id="clienteId">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div class="md:col-span-2">
+                          <label for="nombre" class="form-label">Nombre o Razón Social</label>
+                          <input type="text" id="nombre" class="form-input" required>
+                      </div>
+                      <div>
+                          <label for="tipo_doc" class="form-label">Tipo de Documento</label>
+                          <select id="tipo_doc" class="form-select" required>
+                              <option value="RNC">RNC</option>
+                              <option value="CEDULA">Cédula</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label for="doc" class="form-label">Número de Documento</label>
+                          <input type="text" id="doc" class="form-input" required>
+                      </div>
+                      <div class="md:col-span-2">
+                          <label for="tipo_ncf" class="form-label">Tipo de Comprobante Fiscal (NCF)</label>
+                          <select id="tipo_ncf" class="form-select" required>
+                              <option value="CONSUMIDOR_FINAL">Consumidor Final (B02)</option>
+                              <option value="CREDITO_FISCAL">Crédito Fiscal (B01)</option>
+                              <option value="GUBERNAMENTAL">Gubernamental (B15)</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label for="telefono" class="form-label">Teléfono</label>
+                          <input type="tel" id="telefono" class="form-input">
+                      </div>
+                      <div>
+                          <label for="correo" class="form-label">Correo Electrónico</label>
+                          <input type="email" id="correo" class="form-input">
+                      </div>
+                      <div class="md:col-span-2">
+                          <label for="direccion" class="form-label">Dirección</label>
+                          <textarea id="direccion" class="form-input" rows="2"></textarea>
+                      </div>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button id="modalClienteCancel" class="btn btn-secondary">Cancelar</button>
+              <button id="formClienteSubmit" type="submit" form="formCliente" class="btn btn-primary">Guardar Cliente</button>
+          </div>
+      </div>
+  </div>
+
+
+  <?!= incluir('app.js') ?>
+  <script>
+      const clientesState = {
+          clientes: [],
+          filtros: { search: '' }
+      };
+
+      function renderizarTablaClientes() {
+          const tbody = document.getElementById('tablaClientes');
+          tbody.innerHTML = '';
+          
+          let clientesFiltrados = clientesState.clientes;
+          if (clientesState.filtros.search) {
+              const search = clientesState.filtros.search.toLowerCase();
+              clientesFiltrados = clientesState.clientes.filter(c =>
+                  c.nombre.toLowerCase().includes(search) ||
+                  c.codigo.toLowerCase().includes(search) ||
+                  c.doc.toLowerCase().includes(search)
+              );
+          }
+
+          if (clientesFiltrados.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No se encontraron clientes.</td></tr>';
+              return;
+          }
+
+          clientesFiltrados.forEach(cliente => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                  <td class="table-cell font-mono">${cliente.codigo}</td>
+                  <td class="table-cell font-medium text-gray-900">${cliente.nombre}</td>
+                  <td class="table-cell">${cliente.tipo_doc}: ${cliente.doc}</td>
+                  <td class="table-cell">${cliente.tipo_ncf.replace('_', ' ')}</td>
+                  <td class="table-cell">${cliente.telefono || 'N/A'}</td>
+                  <td class="table-cell space-x-2">
+                      <button class="btn-icon btn-secondary" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg></button>
+                      <button class="btn-icon btn-danger" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                  </td>
+              `;
+              tbody.appendChild(tr);
+          });
+      }
+
+      function cargarClientes() {
+          App.showLoading('Cargando clientes...');
+          App.run('obtenerClientes', null, (clientes) => {
+              clientesState.clientes = clientes;
+              renderizarTablaClientes();
+              App.hideLoading();
+          }, (error) => {
+              App.showError('Error al cargar clientes: ' + error.message);
+          });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+          cargarClientes();
+
+          const modal = App.Modal('modalCliente');
+          
+          document.getElementById('btnNuevoCliente').addEventListener('click', () => {
+              document.getElementById('formCliente').reset();
+              document.getElementById('clienteId').value = '';
+              document.getElementById('modalClienteTitle').textContent = 'Nuevo Cliente';
+              modal.open();
+          });
+          
+          document.getElementById('formCliente').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const cliente = {
+                  nombre: document.getElementById('nombre').value,
+                  tipo_doc: document.getElementById('tipo_doc').value,
+                  doc: document.getElementById('doc').value,
+                  tipo_ncf: document.getElementById('tipo_ncf').value,
+                  telefono: document.getElementById('telefono').value,
+                  correo: document.getElementById('correo').value,
+                  direccion: document.getElementById('direccion').value,
+              };
+              const clienteId = document.getElementById('clienteId').value;
+              const action = clienteId ? 'actualizarCliente' : 'crearCliente';
+              if(clienteId) cliente.id = clienteId;
+
+              App.showLoading('Guardando...');
+              App.run(action, cliente, (response) => {
+                  App.showSuccess(response.message);
+                  modal.close();
+                  cargarClientes();
+              }, App.showError);
+          });
+          
+          document.getElementById('buscadorClientes').addEventListener('input', (e) => {
+              clientesState.filtros.search = e.target.value;
+              renderizarTablaClientes();
+          });
+      });
+  </script>
+</body>
+</html>

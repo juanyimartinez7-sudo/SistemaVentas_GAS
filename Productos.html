@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Gestión de Productos</h1>
+        <button id="btnNuevoProducto" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Nuevo Producto
+        </button>
+      </header>
+      
+      <!-- Buscador -->
+      <div class="mb-4">
+          <input type="text" id="buscadorProductos" placeholder="Buscar por nombre..." class="form-input w-full md:w-1/2">
+      </div>
+
+      <!-- Tabla de Productos -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="table-header">Nombre del Producto/Servicio</th>
+                <th class="table-header">Precio</th>
+                <th class="table-header">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaProductos" class="bg-white divide-y divide-gray-200">
+              <!-- Las filas se insertarán dinámicamente con JavaScript -->
+              <tr><td colspan="3" class="text-center p-4">Cargando productos...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  
+  <!-- Modal para Nuevo/Editar Producto -->
+  <div id="modalProducto" class="modal-container hidden">
+      <div class="modal">
+          <div class="modal-header">
+              <h2 id="modalProductoTitle" class="text-xl font-bold">Nuevo Producto</h2>
+              <button id="modalProductoClose" class="text-gray-500 hover:text-gray-800">&times;</button>
+          </div>
+          <div class="modal-body">
+              <form id="formProducto">
+                  <input type="hidden" id="productoId">
+                  <div class="space-y-4">
+                      <div>
+                          <label for="nombre" class="form-label">Nombre del Producto/Servicio</label>
+                          <input type="text" id="nombre" class="form-input" required>
+                      </div>
+                      <div>
+                          <label for="precio" class="form-label">Precio (RD$)</label>
+                          <input type="number" id="precio" class="form-input" step="0.01" min="0" required>
+                      </div>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button id="modalProductoCancel" class="btn btn-secondary">Cancelar</button>
+              <button id="formProductoSubmit" type="submit" form="formProducto" class="btn btn-primary">Guardar Producto</button>
+          </div>
+      </div>
+  </div>
+
+
+  <?!= incluir('app.js') ?>
+  <script>
+      const productosState = {
+          productos: [],
+          filtros: { search: '' }
+      };
+
+      function renderizarTablaProductos() {
+          const tbody = document.getElementById('tablaProductos');
+          tbody.innerHTML = '';
+          
+          let productosFiltrados = productosState.productos;
+          if (productosState.filtros.search) {
+              const search = productosState.filtros.search.toLowerCase();
+              productosFiltrados = productosState.productos.filter(p =>
+                  p.nombre.toLowerCase().includes(search)
+              );
+          }
+
+          if (productosFiltrados.length === 0) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4">No se encontraron productos.</td></tr>';
+              return;
+          }
+
+          productosFiltrados.forEach(producto => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                  <td class="table-cell font-medium text-gray-900">${producto.nombre}</td>
+                  <td class="table-cell">RD$ ${parseFloat(producto.precio).toFixed(2)}</td>
+                  <td class="table-cell space-x-2">
+                      <button class="btn-icon btn-secondary" title="Editar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" /></svg></button>
+                      <button class="btn-icon btn-danger" title="Eliminar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                  </td>
+              `;
+              tbody.appendChild(tr);
+          });
+      }
+
+      function cargarProductos() {
+          App.showLoading('Cargando productos...');
+          App.run('obtenerProductos', null, (productos) => {
+              productosState.productos = productos;
+              renderizarTablaProductos();
+              App.hideLoading();
+          }, App.showError);
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+          cargarProductos();
+
+          const modal = App.Modal('modalProducto');
+          
+          document.getElementById('btnNuevoProducto').addEventListener('click', () => {
+              document.getElementById('formProducto').reset();
+              document.getElementById('productoId').value = '';
+              document.getElementById('modalProductoTitle').textContent = 'Nuevo Producto';
+              modal.open();
+          });
+          
+          document.getElementById('formProducto').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const producto = {
+                  nombre: document.getElementById('nombre').value,
+                  precio: parseFloat(document.getElementById('precio').value)
+              };
+              const productoId = document.getElementById('productoId').value;
+              const action = productoId ? 'actualizarProducto' : 'crearProducto';
+              if(productoId) producto.id = productoId;
+
+              App.showLoading('Guardando...');
+              App.run(action, producto, (response) => {
+                  App.showSuccess(response.message);
+                  modal.close();
+                  cargarProductos();
+              }, App.showError);
+          });
+          
+          document.getElementById('buscadorProductos').addEventListener('input', (e) => {
+              productosState.filtros.search = e.target.value;
+              renderizarTablaProductos();
+          });
+      });
+  </script>
+</body>
+</html>

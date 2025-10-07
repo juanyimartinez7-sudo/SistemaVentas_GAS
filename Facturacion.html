@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Facturación</h1>
+        <!-- No hay botón de "Nueva Factura" ya que se generan desde Cotizaciones -->
+      </header>
+      
+      <!-- Buscador -->
+      <div class="mb-4">
+          <input type="text" id="buscadorFacturas" placeholder="Buscar por NCF, cliente, número de cotización..." class="form-input w-full md:w-1/2">
+      </div>
+
+      <!-- Tabla de Facturas -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="table-header">NCF</th>
+                <th class="table-header">Cliente</th>
+                <th class="table-header">Fecha</th>
+                <th class="table-header">Total</th>
+                <th class="table-header">Estado</th>
+                <th class="table-header">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaFacturas" class="bg-white divide-y divide-gray-200">
+              <!-- Las filas se insertarán dinámicamente con JavaScript -->
+              <tr><td colspan="6" class="text-center p-4">Cargando facturas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <?!= incluir('app.js') ?>
+  <script>
+      function cargarFacturas() {
+          const tbody = document.getElementById('tablaFacturas');
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Cargando...</td></tr>';
+          
+          // NOTA: La función `obtenerFacturas` debe ser creada en Code.gs
+          // Debería ser similar a `obtenerCotizaciones`, uniendo datos de clientes.
+          // App.run('obtenerFacturas', null, (facturas) => {
+          //     tbody.innerHTML = '';
+          //     if (facturas.length === 0) {
+          //          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No hay facturas.</td></tr>';
+          //          return;
+          //     }
+          //     facturas.forEach(f => {
+          //         const tr = document.createElement('tr');
+          //         tr.innerHTML = `
+          //           <td class="table-cell font-mono">${f.ncf}</td>
+          //           <td class="table-cell font-medium">${f.cliente_nombre}</td>
+          //           <td class="table-cell">${new Date(f.fecha).toLocaleDateString()}</td>
+          //           <td class="table-cell font-bold">RD$ ${parseFloat(f.total).toFixed(2)}</td>
+          //           <td class="table-cell"><span class="badge ${f.estado}">${f.estado}</span></td>
+          //           <td class="table-cell space-x-2">
+          //               <button class="btn-icon btn-secondary" title="Ver/Imprimir PDF"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></button>
+          //               ${f.estado !== 'ANULADA' ? `<button onclick="anular(${f.id})" class="btn-icon btn-danger" title="Anular Factura"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>` : ''}
+          //           </td>
+          //         `;
+          //         tbody.appendChild(tr);
+          //     });
+          // }, App.showError);
+          
+          // Placeholder mientras se implementa `obtenerFacturas`
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Funcionalidad en desarrollo.</td></tr>';
+      }
+
+      function anular(id) {
+          const motivo = prompt("Por favor, ingrese el motivo de la anulación:");
+          if (!motivo) {
+              alert("La anulación fue cancelada. Se requiere un motivo.");
+              return;
+          }
+          
+          if (confirm('¿Está seguro que desea ANULAR esta factura? Esta acción no se puede deshacer.')) {
+              App.showLoading('Anulando factura...');
+              App.run('anularFactura', { facturaId: id, motivo: motivo }, (response) => {
+                  if (response.success) {
+                      App.showSuccess(response.message);
+                      cargarFacturas();
+                  } else {
+                      App.showError(response.message);
+                  }
+              }, App.showError);
+          }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+          cargarFacturas();
+      });
+  </script>
+</body>
+</html>

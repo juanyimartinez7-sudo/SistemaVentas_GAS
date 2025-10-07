@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Configuración del Sistema</h1>
+      </header>
+      
+      <!-- Pestañas de Navegación -->
+      <div class="mb-6 border-b border-gray-200">
+        <nav class="flex space-x-4" aria-label="Tabs">
+          <a href="#empresa" class="tab active">Empresa</a>
+          <a href="#ncf" class="tab">NCF</a>
+          <a href="#usuarios" class="tab">Usuarios</a>
+          <a href="#respaldos" class="tab">Respaldos</a>
+        </nav>
+      </div>
+
+      <!-- Contenido de las Pestañas -->
+      <div id="tabContent">
+        <!-- Pestaña Empresa -->
+        <div id="empresa" class="tab-pane active">
+          <div class="card max-w-2xl">
+            <h2 class="card-title">Datos de la Empresa</h2>
+            <form id="formEmpresa">
+              <!-- Campos del formulario de empresa -->
+              <p class="text-gray-500">Funcionalidad en desarrollo.</p>
+              <div class="mt-6 text-right">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <!-- Pestaña NCF -->
+        <div id="ncf" class="tab-pane hidden">
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="card-title">Gestión de Series NCF</h2>
+              <button class="btn btn-primary">Añadir Serie NCF</button>
+            </div>
+            <!-- Tabla de NCF -->
+            <p class="text-gray-500">Funcionalidad en desarrollo.</p>
+          </div>
+        </div>
+
+        <!-- Pestaña Usuarios -->
+        <div id="usuarios" class="tab-pane hidden">
+           <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="card-title">Gestión de Usuarios</h2>
+              <button class="btn btn-primary">Nuevo Usuario</button>
+            </div>
+            <!-- Tabla de Usuarios -->
+            <p class="text-gray-500">Funcionalidad en desarrollo.</p>
+          </div>
+        </div>
+        
+        <!-- Pestaña Respaldos -->
+        <div id="respaldos" class="tab-pane hidden">
+          <div class="card max-w-2xl">
+            <h2 class="card-title">Respaldos y Restauración</h2>
+            <p class="text-gray-600 mb-4">Exporte todos los datos del sistema a un archivo CSV/JSON o restaure desde un respaldo previo.</p>
+            <div class="space-y-4">
+              <button class="btn btn-primary w-full">Exportar Todos los Datos</button>
+              <div>
+                <label for="archivoRestauracion" class="form-label">Restaurar desde archivo</label>
+                <input type="file" id="archivoRestauracion" class="form-input">
+                <button class="btn btn-danger mt-2 w-full">Restaurar Datos (Acción Peligrosa)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </main>
+  </div>
+  
+  <?!= incluir('app.js') ?>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.tab');
+      const panes = document.querySelectorAll('.tab-pane');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          e.preventDefault();
+          
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          panes.forEach(p => p.classList.add('hidden'));
+          
+          const targetPaneId = tab.getAttribute('href').substring(1);
+          document.getElementById(targetPaneId).classList.remove('hidden');
+        });
+      });
+    });
+  </script>
+</body>
+</html>

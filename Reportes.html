@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Reportes DGII</h1>
+      </header>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Reporte 607 -->
+        <div class="card">
+          <h2 class="card-title">Reporte 607 - Ventas y Operaciones</h2>
+          <p class="text-gray-600 mb-4">Exporta un archivo CSV con las ventas del período seleccionado, listo para la plataforma de la DGII.</p>
+          <form id="form607">
+            <div class="flex items-end space-x-4">
+              <div>
+                <label for="fechaDesde607" class="form-label">Desde</label>
+                <input type="date" id="fechaDesde607" class="form-input" required>
+              </div>
+              <div>
+                <label for="fechaHasta607" class="form-label">Hasta</label>
+                <input type="date" id="fechaHasta607" class="form-input" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Generar 607</button>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Reporte 608 -->
+        <div class="card">
+          <h2 class="card-title">Reporte 608 - Comprobantes Anulados</h2>
+          <p class="text-gray-600 mb-4">Genera un listado de los NCF que fueron anulados en el período seleccionado.</p>
+           <form id="form608">
+            <div class="flex items-end space-x-4">
+              <div>
+                <label for="fechaDesde608" class="form-label">Desde</label>
+                <input type="date" id="fechaDesde608" class="form-input" required>
+              </div>
+              <div>
+                <label for="fechaHasta608" class="form-label">Hasta</label>
+                <input type="date" id="fechaHasta608" class="form-input" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Generar 608</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Previsualización de Datos -->
+      <div class="mt-8 card">
+          <h2 class="card-title">Previsualización del Reporte</h2>
+          <div id="previewContainer" class="overflow-x-auto">
+              <p class="text-gray-500">Seleccione un reporte y rango de fechas para ver los datos aquí.</p>
+          </div>
+      </div>
+      
+    </main>
+  </div>
+  
+  <?!= incluir('app.js') ?>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('form607').addEventListener('submit', e => {
+        e.preventDefault();
+        alert('Generando reporte 607... (funcionalidad en desarrollo)');
+        // Lógica para llamar a google.script.run.exportar607CSV(fechas)
+        // El backend generaría el CSV, lo guardaría en Drive y devolvería el link de descarga.
+      });
+
+      document.getElementById('form608').addEventListener('submit', e => {
+        e.preventDefault();
+        alert('Generando reporte 608... (funcionalidad en desarrollo)');
+        // Lógica para llamar a google.script.run.exportar608CSV(fechas)
+      });
+    });
+  </script>
+</body>
+</html>

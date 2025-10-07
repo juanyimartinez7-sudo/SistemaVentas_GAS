@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Cotizaciones</h1>
+        <button id="btnNuevaCotizacion" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          Nueva Cotización
+        </button>
+      </header>
+      
+      <!-- Formulario de Nueva Cotización (inicialmente oculto) -->
+      <div id="formContainer" class="card mb-6 hidden">
+        <h2 class="text-xl font-bold mb-4">Crear Nueva Cotización</h2>
+        <form id="formCotizacion">
+          <!-- Selección de Cliente -->
+          <div class="mb-4">
+            <label for="selectCliente" class="form-label">Cliente</label>
+            <select id="selectCliente" class="form-select" required></select>
+          </div>
+          
+          <!-- Items de la Cotización -->
+          <h3 class="font-semibold mb-2">Productos/Servicios</h3>
+          <div id="itemsContainer" class="space-y-2 mb-4">
+            <!-- Items se añaden aquí -->
+          </div>
+          <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm">Añadir Producto</button>
+          
+          <!-- Totales -->
+          <div class="mt-6 border-t pt-4 text-right">
+             <p class="text-gray-600">Subtotal: <span id="subtotal" class="font-bold">RD$ 0.00</span></p>
+             <p class="text-gray-600">ITBIS (18%): <span id="itbis" class="font-bold">RD$ 0.00</span></p>
+             <p class="text-2xl font-bold text-gray-800">Total: <span id="total" class="font-bold">RD$ 0.00</span></p>
+          </div>
+          
+          <div class="mt-6 flex justify-end space-x-3">
+              <button type="button" id="cancelarCotizacion" class="btn btn-secondary">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar Cotización</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de Cotizaciones -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="table-header">Número</th>
+                <th class="table-header">Cliente</th>
+                <th class="table-header">Fecha</th>
+                <th class="table-header">Total</th>
+                <th class="table-header">Estado</th>
+                <th class="table-header">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCotizaciones" class="bg-white divide-y divide-gray-200">
+              <tr><td colspan="6" class="text-center p-4">Cargando cotizaciones...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <?!= incluir('app.js') ?>
+  <script>
+    const cotizacionState = {
+      clientes: [],
+      productos: [],
+      items: [],
+      ITBIS_RATE: 0.18
+    };
+
+    function initFormulario() {
+      document.getElementById('btnNuevaCotizacion').addEventListener('click', () => {
+        document.getElementById('formContainer').classList.remove('hidden');
+        document.getElementById('btnNuevaCotizacion').classList.add('hidden');
+        resetFormulario();
+      });
+      document.getElementById('cancelarCotizacion').addEventListener('click', () => {
+        document.getElementById('formContainer').classList.add('hidden');
+        document.getElementById('btnNuevaCotizacion').classList.remove('hidden');
+      });
+      document.getElementById('addItemBtn').addEventListener('click', agregarItem);
+      document.getElementById('formCotizacion').addEventListener('submit', guardarCotizacion);
+    }
+
+    function resetFormulario() {
+        document.getElementById('formCotizacion').reset();
+        document.getElementById('itemsContainer').innerHTML = '';
+        cotizacionState.items = [];
+        agregarItem();
+        calcularTotales();
+    }
+    
+    function cargarDatosIniciales() {
+        App.showLoading('Cargando datos...');
+        const p1 = new Promise((resolve, reject) => App.run('obtenerClientes', null, resolve, reject));
+        const p2 = new Promise((resolve, reject) => App.run('obtenerProductos', null, resolve, reject));
+
+        Promise.all([p1, p2]).then(([clientes, productos]) => {
+            cotizacionState.clientes = clientes;
+            cotizacionState.productos = productos;
+            
+            const selectCliente = document.getElementById('selectCliente');
+            selectCliente.innerHTML = '<option value="">Seleccione un cliente</option>';
+            clientes.forEach(c => selectCliente.innerHTML += `<option value="${c.id}">${c.nombre} (${c.codigo})</option>`);
+            
+            App.hideLoading();
+            cargarCotizaciones();
+        }).catch(App.showError);
+    }
+    
+    function agregarItem() {
+        const itemId = Date.now();
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'flex items-center space-x-2 p-2 border rounded';
+        itemDiv.dataset.itemId = itemId;
+
+        let productoOptions = '<option value="">Seleccione un producto</option>';
+        cotizacionState.productos.forEach(p => {
+            productoOptions += `<option value="${p.id}" data-precio="${p.precio}">${p.nombre}</option>`;
+        });
+
+        itemDiv.innerHTML = `
+            <select class="form-select flex-1 item-producto">${productoOptions}</select>
+            <input type="number" min="1" value="1" class="form-input w-24 item-cantidad" placeholder="Cant.">
+            <input type="text" class="form-input w-32 item-precio" placeholder="Precio" readonly>
+            <button type="button" class="btn-icon btn-danger item-remove">&times;</button>
+        `;
+
+        document.getElementById('itemsContainer').appendChild(itemDiv);
+        
+        itemDiv.querySelector('.item-producto').addEventListener('change', (e) => onProductoChange(e, itemId));
+        itemDiv.querySelector('.item-cantidad').addEventListener('input', calcularTotales);
+        itemDiv.querySelector('.item-remove').addEventListener('click', () => {
+            itemDiv.remove();
+            calcularTotales();
+        });
+    }
+
+    function onProductoChange(event, itemId) {
+        const select = event.target;
+        const selectedOption = select.options[select.selectedIndex];
+        const precio = selectedOption.dataset.precio || 0;
+        const itemDiv = select.closest('[data-item-id]');
+        itemDiv.querySelector('.item-precio').value = parseFloat(precio).toFixed(2);
+        calcularTotales();
+    }
+
+    function calcularTotales() {
+        let subtotal = 0;
+        document.querySelectorAll('#itemsContainer > div').forEach(itemDiv => {
+            const cantidad = parseFloat(itemDiv.querySelector('.item-cantidad').value) || 0;
+            const precio = parseFloat(itemDiv.querySelector('.item-precio').value) || 0;
+            subtotal += cantidad * precio;
+        });
+        
+        const itbis = subtotal * cotizacionState.ITBIS_RATE;
+        const total = subtotal + itbis;
+
+        document.getElementById('subtotal').textContent = `RD$ ${subtotal.toFixed(2)}`;
+        document.getElementById('itbis').textContent = `RD$ ${itbis.toFixed(2)}`;
+        document.getElementById('total').textContent = `RD$ ${total.toFixed(2)}`;
+    }
+
+    function guardarCotizacion(e) {
+        e.preventDefault();
+        const cotizacion = {
+            cliente_id: document.getElementById('selectCliente').value,
+            items: []
+        };
+        
+        let valid = true;
+        document.querySelectorAll('#itemsContainer > div').forEach(itemDiv => {
+            const productoSelect = itemDiv.querySelector('.item-producto');
+            const item = {
+                producto_id: productoSelect.value,
+                nombre: productoSelect.options[productoSelect.selectedIndex].text,
+                cantidad: parseFloat(itemDiv.querySelector('.item-cantidad').value) || 0,
+                precio: parseFloat(itemDiv.querySelector('.item-precio').value) || 0,
+            };
+            if (!item.producto_id || item.cantidad <= 0) {
+                valid = false;
+            }
+            cotizacion.items.push(item);
+        });
+
+        if (!cotizacion.cliente_id) {
+          App.showError('Debe seleccionar un cliente.');
+          return;
+        }
+        if (!valid || cotizacion.items.length === 0) {
+            App.showError('Añada al menos un producto válido con cantidad.');
+            return;
+        }
+
+        App.showLoading('Guardando cotización...');
+        App.run('crearCotizacion', cotizacion, (response) => {
+            App.showSuccess(response.message);
+            document.getElementById('formContainer').classList.add('hidden');
+            document.getElementById('btnNuevaCotizacion').classList.remove('hidden');
+            cargarCotizaciones();
+        }, App.showError);
+    }
+    
+    function cargarCotizaciones() {
+        const tbody = document.getElementById('tablaCotizaciones');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Cargando...</td></tr>';
+        App.run('obtenerCotizaciones', null, (cotizaciones) => {
+            tbody.innerHTML = '';
+            if (cotizaciones.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">No hay cotizaciones.</td></tr>';
+                 return;
+            }
+            cotizaciones.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                  <td class="table-cell font-mono">${c.numero}</td>
+                  <td class="table-cell font-medium">${c.cliente_nombre}</td>
+                  <td class="table-cell">${new Date(c.creado_en).toLocaleDateString()}</td>
+                  <td class="table-cell font-bold">RD$ ${parseFloat(c.total).toFixed(2)}</td>
+                  <td class="table-cell"><span class="badge ${c.estado}">${c.estado}</span></td>
+                  <td class="table-cell space-x-2">
+                      <button onclick="verPdfCotizacion(${c.id})" class="btn-icon btn-secondary" title="Ver/Imprimir PDF"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg></button>
+                      ${c.estado === 'EMITIDA' ? `<button onclick="facturar(${c.id})" class="btn-icon btn-primary" title="Facturar"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></button>` : ''}
+                  </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }, App.showError);
+    }
+    
+    function facturar(id) {
+        if (!confirm('¿Está seguro que desea facturar esta cotización? Esta acción no se puede deshacer.')) return;
+        App.showLoading('Facturando...');
+        App.run('facturarDesdeCotizacion', id, (response) => {
+            if (response.success) {
+                App.showSuccess(response.message);
+                cargarCotizaciones();
+            } else {
+                App.showError(response.message);
+            }
+        }, App.showError);
+    }
+
+    function verPdfCotizacion(id) {
+        App.showLoading('Generando PDF...');
+        App.run('generarUrlPdfCotizacion', id, (response) => {
+            if (response && response.url) {
+                window.open(response.url, '_blank');
+                App.hideLoading();
+            } else {
+                App.showError('No se pudo generar el PDF.');
+            }
+        }, App.showError);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initFormulario();
+      cargarDatosIniciales();
+    });
+  </script>
+</body>
+</html>

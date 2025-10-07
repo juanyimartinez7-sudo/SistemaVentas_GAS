@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <button onclick="google.script.run.withSuccessHandler(() => window.top.location.reload()).cerrarSesion()" class="btn btn-danger">Cerrar Sesión</button>
+      </header>
+
+      <!-- Tarjetas de Métricas -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="card">
+          <h2 class="card-title">Ventas del Mes</h2>
+          <p class="card-content text-3xl font-bold" id="ventasMes">RD$ 0.00</p>
+          <p class="text-sm text-gray-500">Comparado con el mes anterior</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Cotizaciones Pendientes</h2>
+          <p class="card-content text-3xl font-bold" id="cotPendientes">0</p>
+          <p class="text-sm text-gray-500">Listas para facturar</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Cuentas por Cobrar</h2>
+          <p class="card-content text-3xl font-bold" id="cuentasPorCobrar">RD$ 0.00</p>
+          <p class="text-sm text-gray-500">Total de facturas vigentes</p>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Nuevos Clientes</h2>
+          <p class="card-content text-3xl font-bold" id="nuevosClientes">0</p>
+          <p class="text-sm text-gray-500">Registrados este mes</p>
+        </div>
+      </div>
+
+      <!-- Accesos Rápidos -->
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-gray-700 mb-3">Accesos Rápidos</h2>
+        <div class="flex space-x-4">
+          <a href="<?= urlBase ?>?view=cotizaciones" class="btn btn-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Crear Cotización
+          </a>
+          <a href="<?= urlBase ?>?view=clientes" class="btn btn-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+            Crear Cliente
+          </a>
+        </div>
+      </div>
+
+      <!-- Gráficas -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="card">
+          <h2 class="card-title">Ventas por Mes (Últimos 6 meses)</h2>
+          <div class="card-content">
+            <!-- Placeholder para la gráfica -->
+            <div class="bg-gray-200 h-64 flex items-center justify-center">
+              <p class="text-gray-500">Gráfica de Ventas</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Top 5 Clientes</h2>
+           <div class="card-content">
+            <!-- Placeholder para la lista -->
+            <ul class="divide-y divide-gray-200" id="topClientes">
+              <li class="py-2 text-gray-500">Cargando...</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  
+  <?!= incluir('app.js') ?>
+  <script>
+    // Lógica específica para el Dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Dashboard inicializado');
+      // Aquí irían las llamadas a google.script.run para cargar los datos de las tarjetas y gráficas.
+      // Ejemplo:
+      // App.run('obtenerDatosDashboard', null, (data) => {
+      //   document.getElementById('ventasMes').textContent = `RD$ ${data.ventasMes.toFixed(2)}`;
+      //   document.getElementById('cotPendientes').textContent = data.cotPendientes;
+      //   // ...etc
+      // });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "name": " Sistema de Ventas para Google Apps Script",
+  "description": "Un sistema de ventas completo que utiliza Google Sheets como base de datos, con módulos para clientes, productos, cotizaciones, facturación, cuentas por cobrar, reportes y configuración. Diseñado para ser implementado como una aplicación web de Google Apps Script.",
+  "requestFramePermissions": []
+}

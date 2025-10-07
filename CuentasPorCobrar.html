@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= incluir('main.css') ?>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    
+    <?!= incluir('Sidebar.html') ?>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Cuentas por Cobrar</h1>
+      </header>
+      
+      <!-- Buscador -->
+      <div class="mb-4">
+          <input type="text" id="buscadorCxC" placeholder="Buscar por NCF o cliente..." class="form-input w-full md:w-1/2">
+      </div>
+
+      <!-- Tabla de Cuentas por Cobrar -->
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="table-header">NCF</th>
+                <th class="table-header">Cliente</th>
+                <th class="table-header">Fecha Emisión</th>
+                <th class="table-header">Total Factura</th>
+                <th class="table-header">Estado</th>
+                <th class="table-header">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCxC" class="bg-white divide-y divide-gray-200">
+              <tr><td colspan="6" class="text-center p-4">Funcionalidad en desarrollo.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Modal para Aplicar Pago -->
+  <div id="modalPago" class="modal-container hidden">
+      <div class="modal max-w-lg">
+          <div class="modal-header">
+              <h2 id="modalPagoTitle" class="text-xl font-bold">Aplicar Pago a Factura</h2>
+              <button id="modalPagoClose" class="text-gray-500 hover:text-gray-800">&times;</button>
+          </div>
+          <div class="modal-body">
+              <form id="formPago">
+                  <input type="hidden" id="pagoFacturaId">
+                  <p class="mb-4">Factura: <span id="pagoNcf" class="font-bold"></span></p>
+                  <p class="mb-4">Monto Total: <span id="pagoMontoTotal" class="font-bold"></span></p>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label for="monto_pagado" class="form-label">Monto Pagado</label>
+                      <input type="number" id="monto_pagado" class="form-input" step="0.01" required>
+                    </div>
+                    <div>
+                      <label for="forma_pago" class="form-label">Forma de Pago</label>
+                      <select id="forma_pago" class="form-select" required>
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                        <option value="CHEQUE">Cheque</option>
+                        <option value="TARJETA">Tarjeta</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="banco" class="form-label">Banco</label>
+                      <input type="text" id="banco" class="form-input">
+                    </div>
+                     <div>
+                      <label for="referencia" class="form-label">Referencia</label>
+                      <input type="text" id="referencia" class="form-input" placeholder="Nro. cheque/transf, etc.">
+                    </div>
+                    <div>
+                      <label for="ret_itbis" class="form-label">ITBIS Retenido</label>
+                      <input type="number" id="ret_itbis" class="form-input" step="0.01" value="0">
+                    </div>
+                    <div>
+                      <label for="ret_isr" class="form-label">ISR Retenido</label>
+                      <input type="number" id="ret_isr" class="form-input" step="0.01" value="0">
+                    </div>
+                  </div>
+                  <div class="mt-4 p-3 bg-gray-100 rounded text-right">
+                      <p class="text-lg font-bold">Neto Recibido: <span id="netoRecibido" class="text-green-600">RD$ 0.00</span></p>
+                  </div>
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button id="modalPagoCancel" class="btn btn-secondary">Cancelar</button>
+              <button id="formPagoSubmit" type="submit" form="formPago" class="btn btn-primary">Guardar Pago</button>
+          </div>
+      </div>
+  </div>
+
+  <?!= incluir('app.js') ?>
+  <script>
+    function calcularNeto() {
+      const monto = parseFloat(document.getElementById('monto_pagado').value) || 0;
+      const retItbis = parseFloat(document.getElementById('ret_itbis').value) || 0;
+      const retIsr = parseFloat(document.getElementById('ret_isr').value) || 0;
+      const neto = monto - retItbis - retIsr;
+      document.getElementById('netoRecibido').textContent = `RD$ ${neto.toFixed(2)}`;
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      // Lógica para cargar las facturas vigentes, similar a Facturacion.html
+      // ...
+
+      const pagoModal = App.Modal('modalPago');
+      
+      // Ejemplo de cómo se abriría el modal desde un botón en la tabla
+      // function abrirModalPago(factura) {
+      //   document.getElementById('pagoFacturaId').value = factura.id;
+      //   document.getElementById('pagoNcf').textContent = factura.ncf;
+      //   document.getElementById('pagoMontoTotal').textContent = `RD$ ${parseFloat(factura.total).toFixed(2)}`;
+      //   document.getElementById('monto_pagado').value = parseFloat(factura.total).toFixed(2);
+      //   calcularNeto();
+      //   pagoModal.open();
+      // }
+
+      document.getElementById('formPago').addEventListener('input', calcularNeto);
+
+      document.getElementById('formPago').addEventListener('submit', e => {
+        e.preventDefault();
+        // Lógica para llamar a `google.script.run.registrarPago`
+        //...
+        alert('Guardando pago... (funcionalidad en desarrollo)');
+        pagoModal.close();
+      });
+    });
+  </script>
+</body>
+</html>
